@@ -57,12 +57,12 @@ public class Account {
     this.authenticatedDevice = device;
   }
 
-  public void setNumber(String number) {
-    this.number = number;
-  }
-
   public String getNumber() {
     return number;
+  }
+
+  public void setNumber(String number) {
+    this.number = number;
   }
 
   public void addDevice(Device device) {
@@ -71,7 +71,7 @@ public class Account {
   }
 
   public void removeDevice(long deviceId) {
-    this.devices.remove(new Device(deviceId, null, null, null, null, null, null, null, false, 0, null, 0, 0, false, "NA"));
+    this.devices.remove(new Device(deviceId, null, null, null, null, null, null, null, null, false, 0, null, 0, 0, false, "NA"));
   }
 
   public Set<Device> getDevices() {
@@ -140,11 +140,11 @@ public class Account {
     return Optional.absent();
   }
 
-  public void setIdentityKey(String identityKey) {
-    this.identityKey = identityKey;
-  }
-
   public String getIdentityKey() {
     return identityKey;
+  }
+
+  public void setIdentityKey(String identityKey) {
+    this.identityKey = identityKey;
   }
 }

@@ -15,9 +15,10 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
-public class PushServiceClient {
+public class PushServiceClient implements PushFeedbackService{
 
   private static final String PUSH_GCM_PATH     = "/api/v1/push/gcm";
   private static final String PUSH_APN_PATH     = "/api/v1/push/apn";
@@ -90,5 +91,16 @@ public class PushServiceClient {
 
   private String getAuthorizationHeader(String username, String password) {
     return "Basic " + Base64.encodeBytes((username + ":" + password).getBytes());
+  }
+
+  @Override
+  public List<UnregisteredEvent> getFeedback(PushService pushService) throws IOException {
+    if (pushService == PushService.APN) {
+      return getApnFeedback();
+    }
+    if (pushService == PushService.GCM) {
+      return getGcmFeedback();
+    }
+    return Collections.emptyList();
   }
 }

@@ -50,6 +50,9 @@ public class Device {
   private String  apnId;
 
   @JsonProperty
+  private String pushymeId;
+
+  @JsonProperty
   private String  voipApnId;
 
   @JsonProperty
@@ -79,7 +82,7 @@ public class Device {
   public Device() {}
 
   public Device(long id, String name, String authToken, String salt,
-                String signalingKey, String gcmId, String apnId,
+                String signalingKey, String gcmId, String apnId, String pushymeId,
                 String voipApnId, boolean fetchesMessages,
                 int registrationId, SignedPreKey signedPreKey,
                 long lastSeen, long created, boolean voice,
@@ -92,6 +95,7 @@ public class Device {
     this.signalingKey    = signalingKey;
     this.gcmId           = gcmId;
     this.apnId           = apnId;
+    this.pushymeId = pushymeId;
     this.voipApnId       = voipApnId;
     this.fetchesMessages = fetchesMessages;
     this.registrationId  = registrationId;
@@ -122,20 +126,20 @@ public class Device {
     this.voipApnId = voipApnId;
   }
 
-  public void setLastSeen(long lastSeen) {
-    this.lastSeen = lastSeen;
-  }
-
   public long getLastSeen() {
     return lastSeen;
   }
 
-  public void setCreated(long created) {
-    this.created = created;
+  public void setLastSeen(long lastSeen) {
+    this.lastSeen = lastSeen;
   }
 
   public long getCreated() {
     return this.created;
+  }
+
+  public void setCreated(long created) {
+    this.created = created;
   }
 
   public String getGcmId() {
@@ -147,6 +151,18 @@ public class Device {
 
     if (gcmId != null) {
       this.pushTimestamp = System.currentTimeMillis();
+    }
+  }
+
+  public String getPushymeId() {
+    return pushymeId;
+  }
+
+  public void setPushymeId(String pushymeId) {
+    this.pushymeId = pushymeId;
+
+    if (pushymeId != null) {
+      pushTimestamp = System.currentTimeMillis();
     }
   }
 
@@ -174,13 +190,13 @@ public class Device {
     this.voice = voice;
   }
 
+  public AuthenticationCredentials getAuthenticationCredentials() {
+    return new AuthenticationCredentials(authToken, salt);
+  }
+
   public void setAuthenticationCredentials(AuthenticationCredentials credentials) {
     this.authToken = credentials.getHashedAuthenticationToken();
     this.salt      = credentials.getSalt();
-  }
-
-  public AuthenticationCredentials getAuthenticationCredentials() {
-    return new AuthenticationCredentials(authToken, salt);
   }
 
   public String getSignalingKey() {
@@ -192,7 +208,7 @@ public class Device {
   }
 
   public boolean isActive() {
-    boolean hasChannel = fetchesMessages || !Util.isEmpty(getApnId()) || !Util.isEmpty(getGcmId());
+    boolean hasChannel = fetchesMessages || !Util.isEmpty(getApnId()) || !Util.isEmpty(getGcmId()) || !Util.isEmpty(getPushymeId());
 
     return (id == MASTER_ID && hasChannel) ||
            (id != MASTER_ID && hasChannel && signedPreKey != null && lastSeen > (System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30)));
@@ -230,12 +246,12 @@ public class Device {
     return pushTimestamp;
   }
 
-  public void setUserAgent(String userAgent) {
-    this.userAgent = userAgent;
-  }
-
   public String getUserAgent() {
     return this.userAgent;
+  }
+
+  public void setUserAgent(String userAgent) {
+    this.userAgent = userAgent;
   }
 
   @Override

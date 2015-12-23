@@ -19,8 +19,6 @@ package org.whispersystems.textsecuregcm.push;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whispersystems.textsecuregcm.entities.ApnMessage;
-import org.whispersystems.textsecuregcm.entities.CryptoEncodingException;
-import org.whispersystems.textsecuregcm.entities.EncryptedOutgoingMessage;
 import org.whispersystems.textsecuregcm.entities.GcmMessage;
 import org.whispersystems.textsecuregcm.push.ApnFallbackManager.ApnFallbackTask;
 import org.whispersystems.textsecuregcm.push.WebsocketSender.DeliveryStatus;
@@ -35,10 +33,8 @@ import static org.whispersystems.textsecuregcm.entities.MessageProtos.Envelope;
 
 public class PushSender {
 
-  private final Logger logger = LoggerFactory.getLogger(PushSender.class);
-
   private static final String APN_PAYLOAD = "{\"aps\":{\"sound\":\"default\",\"badge\":%d,\"alert\":{\"loc-key\":\"APN_Message\"}}}";
-
+  private final Logger logger = LoggerFactory.getLogger(PushSender.class);
   private final ApnFallbackManager apnFallbackManager;
   private final PushServiceClient  pushServiceClient;
   private final WebsocketSender    webSocketSender;
@@ -62,7 +58,7 @@ public class PushSender {
     return webSocketSender;
   }
 
-  private void sendGcmMessage(Account account, Device device, Envelope message)
+  protected void sendGcmMessage(Account account, Device device, Envelope message)
       throws TransientPushFailureException
   {
     sendNotificationGcmMessage(account, device, message);
@@ -106,7 +102,7 @@ public class PushSender {
     }
   }
 
-  private void sendWebSocketMessage(Account account, Device device, Envelope outgoingMessage)
+  protected void sendWebSocketMessage(Account account, Device device, Envelope outgoingMessage)
   {
     webSocketSender.sendMessage(account, device, outgoingMessage, WebsocketSender.Type.WEB);
   }

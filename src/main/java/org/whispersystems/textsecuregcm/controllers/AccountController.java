@@ -19,48 +19,30 @@ package org.whispersystems.textsecuregcm.controllers;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
+import io.dropwizard.auth.Auth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whispersystems.textsecuregcm.auth.AuthenticationCredentials;
-import org.whispersystems.textsecuregcm.auth.AuthorizationHeader;
-import org.whispersystems.textsecuregcm.auth.AuthorizationToken;
-import org.whispersystems.textsecuregcm.auth.AuthorizationTokenGenerator;
-import org.whispersystems.textsecuregcm.auth.InvalidAuthorizationHeaderException;
+import org.whispersystems.textsecuregcm.auth.*;
 import org.whispersystems.textsecuregcm.entities.AccountAttributes;
 import org.whispersystems.textsecuregcm.entities.ApnRegistrationId;
 import org.whispersystems.textsecuregcm.entities.GcmRegistrationId;
+import org.whispersystems.textsecuregcm.entities.PushymeRegistrationId;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
 import org.whispersystems.textsecuregcm.providers.TimeProvider;
 import org.whispersystems.textsecuregcm.sms.SmsSender;
 import org.whispersystems.textsecuregcm.sms.TwilioSmsSender;
-import org.whispersystems.textsecuregcm.storage.Account;
-import org.whispersystems.textsecuregcm.storage.AccountsManager;
-import org.whispersystems.textsecuregcm.storage.Device;
-import org.whispersystems.textsecuregcm.storage.MessagesManager;
-import org.whispersystems.textsecuregcm.storage.PendingAccountsManager;
+import org.whispersystems.textsecuregcm.storage.*;
 import org.whispersystems.textsecuregcm.util.Util;
 import org.whispersystems.textsecuregcm.util.VerificationCode;
 
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Map;
-
-import io.dropwizard.auth.Auth;
 
 @Path("/v1/accounts")
 public class AccountController {
@@ -227,25 +209,29 @@ public class AccountController {
   @Path("/gcm/")
   @Consumes(MediaType.APPLICATION_JSON)
   public void setGcmRegistrationId(@Auth Account account, @Valid GcmRegistrationId registrationId) {
-    Device device = account.getAuthenticatedDevice().get();
-    device.setApnId(null);
-    device.setVoipApnId(null);
-    device.setGcmId(registrationId.getGcmRegistrationId());
-
-    if (registrationId.isWebSocketChannel()) device.setFetchesMessages(true);
-    else                                     device.setFetchesMessages(false);
-
-    accounts.update(account);
+    setPushId(account, registrationId.getGcmRegistrationId(), null, null, null, registrationId.isWebSocketChannel());
   }
 
   @Timed
   @DELETE
   @Path("/gcm/")
   public void deleteGcmRegistrationId(@Auth Account account) {
-    Device device = account.getAuthenticatedDevice().get();
-    device.setGcmId(null);
-    device.setFetchesMessages(false);
-    accounts.update(account);
+    setPushId(account, null, null, null, null, false);
+  }
+
+  @Timed
+  @PUT
+  @Path("/pushyme/")
+  @Consumes(MediaType.APPLICATION_JSON)
+  public void setPushymeRegistrationId(@Auth Account account, @Valid PushymeRegistrationId registrationId) {
+    setPushId(account, null, null, null, registrationId.getPushymeRegistrationId(), registrationId.isWebSocketChannel());
+  }
+
+  @Timed
+  @DELETE
+  @Path("/pushyme/")
+  public void deletePushymeRegistrationId(@Auth Account account) {
+    setPushId(account, null, null, null, null, false);
   }
 
   @Timed
@@ -253,21 +239,23 @@ public class AccountController {
   @Path("/apn/")
   @Consumes(MediaType.APPLICATION_JSON)
   public void setApnRegistrationId(@Auth Account account, @Valid ApnRegistrationId registrationId) {
-    Device device = account.getAuthenticatedDevice().get();
-    device.setApnId(registrationId.getApnRegistrationId());
-    device.setVoipApnId(registrationId.getVoipRegistrationId());
-    device.setGcmId(null);
-    device.setFetchesMessages(true);
-    accounts.update(account);
+    setPushId(account, null, registrationId.getApnRegistrationId(), registrationId.getVoipRegistrationId(), null, true);
   }
 
   @Timed
   @DELETE
   @Path("/apn/")
   public void deleteApnRegistrationId(@Auth Account account) {
+    setPushId(account, null, null, null, null, false);
+  }
+
+  private void setPushId(Account account, String gcmId, String apnId, String voipApnId, String pushymeId, boolean fetchesMessage) {
     Device device = account.getAuthenticatedDevice().get();
-    device.setApnId(null);
-    device.setFetchesMessages(false);
+    device.setGcmId(gcmId);
+    device.setApnId(apnId);
+    device.setVoipApnId(voipApnId);
+    device.setPushymeId(pushymeId);
+    device.setFetchesMessages(fetchesMessage);
     accounts.update(account);
   }
 

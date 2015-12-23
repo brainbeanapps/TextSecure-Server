@@ -30,40 +30,37 @@ import org.whispersystems.textsecuregcm.util.Constants;
 import org.whispersystems.textsecuregcm.websocket.ProvisioningAddress;
 import org.whispersystems.textsecuregcm.websocket.WebsocketAddress;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.whispersystems.textsecuregcm.entities.MessageProtos.Envelope;
 import static org.whispersystems.textsecuregcm.storage.PubSubProtos.PubSubMessage;
 
 public class WebsocketSender {
 
-  public static enum Type {
-    APN,
-    GCM,
-    WEB
-  }
-
   private static final Logger logger = LoggerFactory.getLogger(WebsocketSender.class);
-
   private final MetricRegistry metricRegistry = SharedMetricRegistries.getOrCreate(Constants.METRICS_NAME);
-
-  private final Meter websocketOnlineMeter  = metricRegistry.meter(name(getClass(), "ws_online"  ));
-  private final Meter websocketOfflineMeter = metricRegistry.meter(name(getClass(), "ws_offline" ));
-
-  private final Meter apnOnlineMeter        = metricRegistry.meter(name(getClass(), "apn_online" ));
-  private final Meter apnOfflineMeter       = metricRegistry.meter(name(getClass(), "apn_offline"));
-
-  private final Meter gcmOnlineMeter        = metricRegistry.meter(name(getClass(), "gcm_online" ));
-  private final Meter gcmOfflineMeter       = metricRegistry.meter(name(getClass(), "gcm_offline"));
-
   private final Meter provisioningOnlineMeter  = metricRegistry.meter(name(getClass(), "provisioning_online" ));
   private final Meter provisioningOfflineMeter = metricRegistry.meter(name(getClass(), "provisioning_offline"));
-
   private final MessagesManager messagesManager;
   private final PubSubManager   pubSubManager;
-
+  private final Map<Type, Meter> onlineMeters = new EnumMap<>(Type.class);
+  private final Map<Type, Meter> offlineMeters = new EnumMap<>(Type.class);
   public WebsocketSender(MessagesManager messagesManager, PubSubManager pubSubManager) {
     this.messagesManager = messagesManager;
     this.pubSubManager   = pubSubManager;
+    onlineMeters.put(Type.WEB, metricRegistry.meter(name(getClass(), "ws_offline")));
+    offlineMeters.put(Type.WEB, metricRegistry.meter(name(getClass(), "ws_online")));
+
+    onlineMeters.put(Type.APN, metricRegistry.meter(name(getClass(), "apn_online")));
+    offlineMeters.put(Type.APN, metricRegistry.meter(name(getClass(), "apn_offline")));
+
+    onlineMeters.put(Type.GCM, metricRegistry.meter(name(getClass(), "gcm_online")));
+    offlineMeters.put(Type.GCM, metricRegistry.meter(name(getClass(), "gcm_offline")));
+
+    onlineMeters.put(Type.PUSHYME, metricRegistry.meter(name(getClass(), "pushyme_online")));
+    offlineMeters.put(Type.PUSHYME, metricRegistry.meter(name(getClass(), "pushyme_offline")));
   }
 
   public DeliveryStatus sendMessage(Account account, Device device, Envelope message, Type channel) {
@@ -74,15 +71,11 @@ public class WebsocketSender {
                                                   .build();
 
     if (pubSubManager.publish(address, pubSubMessage)) {
-      if      (channel == Type.APN) apnOnlineMeter.mark();
-      else if (channel == Type.GCM) gcmOnlineMeter.mark();
-      else                          websocketOnlineMeter.mark();
+      onlineMeters.get(channel).mark();
 
       return new DeliveryStatus(true, 0);
     } else {
-      if      (channel == Type.APN) apnOfflineMeter.mark();
-      else if (channel == Type.GCM) gcmOfflineMeter.mark();
-      else                          websocketOfflineMeter.mark();
+      offlineMeters.get(channel).mark();
 
       int queueDepth = messagesManager.insert(account.getNumber(), device.getId(), message);
       pubSubManager.publish(address, PubSubMessage.newBuilder()
@@ -106,6 +99,13 @@ public class WebsocketSender {
       provisioningOfflineMeter.mark();
       return false;
     }
+  }
+
+  public enum Type {
+    APN,
+    GCM,
+    WEB,
+    PUSHYME
   }
 
   public static class DeliveryStatus {

@@ -17,16 +17,10 @@
 package org.whispersystems.textsecuregcm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.whispersystems.textsecuregcm.configuration.FederationConfiguration;
-import org.whispersystems.textsecuregcm.configuration.GraphiteConfiguration;
-import org.whispersystems.textsecuregcm.configuration.PushConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RateLimitsConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RedPhoneConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RedisConfiguration;
-import org.whispersystems.textsecuregcm.configuration.S3Configuration;
-import org.whispersystems.textsecuregcm.configuration.TestDeviceConfiguration;
-import org.whispersystems.textsecuregcm.configuration.TwilioConfiguration;
-import org.whispersystems.textsecuregcm.configuration.WebsocketConfiguration;
+import io.dropwizard.Configuration;
+import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.db.DataSourceFactory;
+import org.whispersystems.textsecuregcm.configuration.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -34,10 +28,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import io.dropwizard.Configuration;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.db.DataSourceFactory;
 
 public class WhisperServerConfiguration extends Configuration {
 
@@ -49,17 +39,17 @@ public class WhisperServerConfiguration extends Configuration {
   @NotNull
   @Valid
   @JsonProperty
-  private PushConfiguration push;
-
-  @NotNull
-  @Valid
-  @JsonProperty
   private S3Configuration s3;
 
   @NotNull
   @Valid
   @JsonProperty
   private RedisConfiguration cache;
+
+  @NotNull
+  @Valid
+  @JsonProperty
+  private PushymeConfiguration pushymeConfiguration;
 
   @NotNull
   @Valid
@@ -115,10 +105,6 @@ public class WhisperServerConfiguration extends Configuration {
     return twilio;
   }
 
-  public PushConfiguration getPushConfiguration() {
-    return push;
-  }
-
   public JerseyClientConfiguration getJerseyClientConfiguration() {
     return httpClient;
   }
@@ -157,6 +143,10 @@ public class WhisperServerConfiguration extends Configuration {
 
   public RedPhoneConfiguration getRedphoneConfiguration() {
     return redphone;
+  }
+
+  public PushymeConfiguration getPushymeConfiguration() {
+    return pushymeConfiguration;
   }
 
   public Map<String, Integer> getTestDevices() {

@@ -4,11 +4,10 @@ twilio: # Twilio SMS gateway configuration
   number:
   localDomain: # The domain Twilio can call back to.
 
-push: # GCM/APN push server configuration
-  host:
-  port:
-  username:
-  password:
+pushymeConfiguration:
+  pushymeApiKey:
+  #maxPendingTasks: 10000 # maximum number of pushes waiting for sending in queue
+  #workerThreadsCount: 20 # number of worker threads which connects to pushy.me to send push
 
 s3: # AWS S3 configuration
   accessKey: 

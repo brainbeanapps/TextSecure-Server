@@ -1,6 +1,7 @@
 package org.whispersystems.textsecuregcm.push;
 
 import com.google.common.base.Optional;
+import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whispersystems.textsecuregcm.entities.UnregisteredEvent;
@@ -14,18 +15,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import io.dropwizard.lifecycle.Managed;
-
 public class FeedbackHandler implements Managed, Runnable {
 
   private final Logger logger = LoggerFactory.getLogger(PushServiceClient.class);
 
-  private final PushServiceClient client;
+  private final PushFeedbackService client;
   private final AccountsManager   accountsManager;
 
   private ScheduledExecutorService executor;
 
-  public FeedbackHandler(PushServiceClient client, AccountsManager accountsManager) {
+  public FeedbackHandler(PushFeedbackService client, AccountsManager accountsManager) {
     this.client          = client;
     this.accountsManager = accountsManager;
   }
@@ -46,8 +45,8 @@ public class FeedbackHandler implements Managed, Runnable {
   @Override
   public void run() {
     try {
-      List<UnregisteredEvent> gcmFeedback = client.getGcmFeedback();
-      List<UnregisteredEvent> apnFeedback = client.getApnFeedback();
+      List<UnregisteredEvent> gcmFeedback = client.getFeedback(PushFeedbackService.PushService.GCM);
+      List<UnregisteredEvent> apnFeedback = client.getFeedback(PushFeedbackService.PushService.APN);
 
       for (UnregisteredEvent gcmEvent : gcmFeedback) {
         handleGcmUnregistered(gcmEvent);

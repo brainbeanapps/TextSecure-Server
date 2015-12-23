@@ -3,6 +3,7 @@ package org.whispersystems.textsecuregcm.tests.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import io.dropwizard.testing.junit.ResourceTestRule;
 import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
 import org.junit.Before;
 import org.junit.Rule;
@@ -12,11 +13,7 @@ import org.whispersystems.textsecuregcm.controllers.FederationControllerV1;
 import org.whispersystems.textsecuregcm.controllers.FederationControllerV2;
 import org.whispersystems.textsecuregcm.controllers.KeysControllerV2;
 import org.whispersystems.textsecuregcm.controllers.MessageController;
-import org.whispersystems.textsecuregcm.entities.IncomingMessageList;
-import org.whispersystems.textsecuregcm.entities.MessageProtos;
-import org.whispersystems.textsecuregcm.entities.PreKeyResponseItemV2;
-import org.whispersystems.textsecuregcm.entities.PreKeyResponseV2;
-import org.whispersystems.textsecuregcm.entities.SignedPreKey;
+import org.whispersystems.textsecuregcm.entities.*;
 import org.whispersystems.textsecuregcm.federation.FederatedClientManager;
 import org.whispersystems.textsecuregcm.limits.RateLimiter;
 import org.whispersystems.textsecuregcm.limits.RateLimiters;
@@ -35,7 +32,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
-import io.dropwizard.testing.junit.ResourceTestRule;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,23 +44,17 @@ public class FederatedControllerTest {
 
   private static final String SINGLE_DEVICE_RECIPIENT = "+14151111111";
   private static final String MULTI_DEVICE_RECIPIENT  = "+14152222222";
-
+  private final SignedPreKey signedPreKey = new SignedPreKey(3333, "foo", "baar");
+  private final PreKeyResponseV2 preKeyResponseV2 = new PreKeyResponseV2("foo", new LinkedList<PreKeyResponseItemV2>());
+  private final ObjectMapper mapper = new ObjectMapper();
+  private final KeysControllerV2  keysControllerV2  = mock(KeysControllerV2.class);
   private PushSender             pushSender             = mock(PushSender.class            );
   private ReceiptSender          receiptSender          = mock(ReceiptSender.class);
   private FederatedClientManager federatedClientManager = mock(FederatedClientManager.class);
   private AccountsManager        accountsManager        = mock(AccountsManager.class       );
   private MessagesManager        messagesManager        = mock(MessagesManager.class);
   private RateLimiters           rateLimiters           = mock(RateLimiters.class          );
-  private RateLimiter            rateLimiter            = mock(RateLimiter.class           );
-
-  private final SignedPreKey signedPreKey = new SignedPreKey(3333, "foo", "baar");
-  private final PreKeyResponseV2 preKeyResponseV2 = new PreKeyResponseV2("foo", new LinkedList<PreKeyResponseItemV2>());
-
-  private final ObjectMapper mapper = new ObjectMapper();
-
   private final MessageController messageController = new MessageController(rateLimiters, pushSender, receiptSender, accountsManager, messagesManager, federatedClientManager);
-  private final KeysControllerV2  keysControllerV2  = mock(KeysControllerV2.class);
-
   @Rule
   public final ResourceTestRule resources = ResourceTestRule.builder()
                                                             .addProvider(AuthHelper.getAuthFilter())
@@ -73,18 +63,17 @@ public class FederatedControllerTest {
                                                             .addResource(new FederationControllerV1(accountsManager, null, messageController, null))
                                                             .addResource(new FederationControllerV2(accountsManager, null, messageController, keysControllerV2))
                                                             .build();
-
-
+  private RateLimiter            rateLimiter            = mock(RateLimiter.class           );
 
   @Before
   public void setup() throws Exception {
     Set<Device> singleDeviceList = new HashSet<Device>() {{
-      add(new Device(1, null, "foo", "bar", "baz", "isgcm", null, null, false, 111, null, System.currentTimeMillis(), System.currentTimeMillis(), false, "Test"));
+      add(new Device(1, null, "foo", "bar", "baz", "isgcm", null, null, null, false, 111, null, System.currentTimeMillis(), System.currentTimeMillis(), false, "Test"));
     }};
 
     Set<Device> multiDeviceList = new HashSet<Device>() {{
-      add(new Device(1, null, "foo", "bar", "baz", "isgcm", null, null, false, 222, null, System.currentTimeMillis(), System.currentTimeMillis(), false, "Test"));
-      add(new Device(2, null, "foo", "bar", "baz", "isgcm", null, null, false, 333, null, System.currentTimeMillis(), System.currentTimeMillis(), false, "Test"));
+      add(new Device(1, null, "foo", "bar", "baz", "isgcm", null, null, null, false, 222, null, System.currentTimeMillis(), System.currentTimeMillis(), false, "Test"));
+      add(new Device(2, null, "foo", "bar", "baz", "isgcm", null, null, null, false, 333, null, System.currentTimeMillis(), System.currentTimeMillis(), false, "Test"));
     }};
 
     Account singleDeviceAccount = new Account(SINGLE_DEVICE_RECIPIENT, singleDeviceList);
