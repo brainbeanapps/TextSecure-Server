@@ -49,7 +49,7 @@ public class WhisperServerConfiguration extends Configuration {
   @NotNull
   @Valid
   @JsonProperty
-  private PushymeConfiguration pushymeConfiguration;
+  private EmbeddedPushConfiguration push;
 
   @NotNull
   @Valid
@@ -145,8 +145,8 @@ public class WhisperServerConfiguration extends Configuration {
     return redphone;
   }
 
-  public PushymeConfiguration getPushymeConfiguration() {
-    return pushymeConfiguration;
+  public EmbeddedPushConfiguration getEmbeddedPushConfiguration() {
+    return push;
   }
 
   public Map<String, Integer> getTestDevices() {

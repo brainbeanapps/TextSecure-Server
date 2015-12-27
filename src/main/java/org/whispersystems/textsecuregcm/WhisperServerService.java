@@ -153,14 +153,15 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     FederatedPeerAuthenticator federatedPeerAuthenticator = new FederatedPeerAuthenticator(config.getFederationConfiguration());
     RateLimiters               rateLimiters               = new RateLimiters(config.getLimitsConfiguration(), cacheClient);
 
-    PushymeClient pushymeClient = new PushymeClient(config.getPushymeConfiguration(), httpClient);
+    PushymeClient pushymeClient = new PushymeClient(config.getEmbeddedPushConfiguration(), httpClient);
+    GCMClient     gcmClient     = new GCMClient(config.getEmbeddedPushConfiguration().getGcmApiKey(), config.getEmbeddedPushConfiguration().getWorkerThreadsCount(), config.getEmbeddedPushConfiguration().getMaxPendingTasks());
 
     TwilioSmsSender          twilioSmsSender     = new TwilioSmsSender(config.getTwilioConfiguration());
     SmsSender                smsSender           = new SmsSender(twilioSmsSender);
     UrlSigner                urlSigner           = new UrlSigner(config.getS3Configuration());
-    PushSender               pushSender          = new PushymePushSender(pushymeClient, websocketSender);
+    EmbeddedPushSender       pushSender          = new EmbeddedPushSender(pushymeClient, gcmClient, websocketSender);
     ReceiptSender            receiptSender       = new ReceiptSender(accountsManager, pushSender, federatedClientManager);
-    FeedbackHandler          feedbackHandler     = new FeedbackHandler(pushymeClient, accountsManager);
+    FeedbackHandler          feedbackHandler     = new FeedbackHandler(pushSender, accountsManager);
     Optional<byte[]>         authorizationKey    = config.getRedphoneConfiguration().getAuthorizationKey();
 
     environment.lifecycle().manage(pubSubManager);

@@ -1,104 +1,52 @@
 package org.whispersystems.textsecuregcm.push;
 
-import io.dropwizard.lifecycle.Managed;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.whispersystems.textsecuregcm.configuration.PushymeConfiguration;
-import org.whispersystems.textsecuregcm.entities.PushymeMessage;
-import org.whispersystems.textsecuregcm.entities.UnregisteredEvent;
+import org.whispersystems.textsecuregcm.configuration.EmbeddedPushConfiguration;
+import org.whispersystems.textsecuregcm.storage.Account;
+import org.whispersystems.textsecuregcm.storage.Device;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public class PushymeClient implements Managed, PushFeedbackService {
+public class PushymeClient extends PushClient<PushyPushRequest> {
 
     private static final Logger LOGGER = LogManager.getLogger(PushymeClient.class);
 
+    protected final String endpoint;
     private final Client httpClient;
-    private final ExecutorService workers;
-    private final String endpoint;
 
-    public PushymeClient(PushymeConfiguration configuration, Client httpClient) {
+    public PushymeClient(EmbeddedPushConfiguration configuration, Client httpClient) {
+        super(configuration.getWorkerThreadsCount(), configuration.getMaxPendingTasks());
         this.httpClient = httpClient;
         endpoint = "https://pushy.me/push?api_key=" + configuration.getPushymeApiKey();
-
-        workers = new ThreadPoolExecutor(configuration.getWorkerThreadsCount(), configuration.getWorkerThreadsCount(),
-                0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<Runnable>(configuration.getMaxPendingTasks()),
-                new WorkerThreadFactory());
 
         LOGGER.debug("Pushy client instantiated");
     }
 
-    public void push(PushymeMessage message) throws TransientPushFailureException {
-        try {
-            workers.submit(new SendTask(message));
-        } catch (Exception e) {
-            throw new TransientPushFailureException(e);
-        }
+    @Override
+    protected PushyPushRequest createMessage(Account account, Device device, String message, boolean isReceipt, boolean isNotification) {
+        PushyPushRequest pushyRequest = new PushyPushRequest(device.getPushymeId());
+        String  key     = isReceipt ? "receipt" : isNotification ? "notification" :  "message";
+        pushyRequest.withData(key, message);
+
+        return pushyRequest;
     }
 
-    private void send(PushymeMessage message) {
-        PushyPushRequest pushyRequest = new PushyPushRequest(message.getGcmId());
-        String  key     = message.isReceipt() ? "receipt" : message.isNotification() ? "notification" :  "message";
-        pushyRequest.withData(key, message.getMessage());
+    @Override
+    protected void sendMessage(PushyPushRequest pushyRequest) {
         Response response = httpClient.target(endpoint)
                 .request()
                 .header("Content-Type", "application/json")
                 .post(Entity.entity(pushyRequest, MediaType.APPLICATION_JSON));
-        
+
         if (response.getStatus() >= 400) {
             LOGGER.warn("Bad response from pushyme. " + response);
         }
-    }
-
-    @Override
-    public void start() throws Exception {
-
-    }
-
-    @Override
-    public void stop() throws Exception {
-        workers.shutdownNow();
-    }
-
-    @Override
-    public List<UnregisteredEvent> getFeedback(PushService pushService) throws IOException {
-        return Collections.emptyList();
-    }
-
-    class SendTask implements Runnable {
-        private final PushymeMessage message;
-
-        SendTask(PushymeMessage message) {
-            this.message = message;
-        }
-
-        @Override
-        public void run() {
-            send(message);
-        }
-    }
-}
-
-class WorkerThreadFactory implements ThreadFactory {
-
-    private static AtomicInteger counter = new AtomicInteger();
-
-    @Override
-    public Thread newThread(Runnable r) {
-        Thread thread = new Thread(r);
-        thread.setName("Pushy-worker-" + counter.incrementAndGet());
-        return thread;
     }
 }
 

@@ -3,11 +3,14 @@ package org.whispersystems.textsecuregcm.configuration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
-public class PushymeConfiguration {
+public class EmbeddedPushConfiguration {
 
     @JsonProperty
     @NotEmpty
     private String pushymeApiKey;
+
+    @JsonProperty
+    private String gcmApiKey;
 
     @JsonProperty
     private int maxPendingTasks = 10_000;
@@ -25,5 +28,9 @@ public class PushymeConfiguration {
 
     public int getWorkerThreadsCount() {
         return workerThreadsCount;
+    }
+
+    public String getGcmApiKey() {
+        return gcmApiKey;
     }
 }
