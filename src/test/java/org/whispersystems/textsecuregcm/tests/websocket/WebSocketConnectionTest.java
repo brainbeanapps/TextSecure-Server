@@ -89,9 +89,9 @@ public class WebSocketConnectionTest {
     MessagesManager storedMessages = mock(MessagesManager.class);
 
     List<OutgoingMessageEntity> outgoingMessages = new LinkedList<OutgoingMessageEntity> () {{
-      add(createMessage(1L, "sender1", 1111, false, "first"));
-      add(createMessage(2L, "sender1", 2222, false, "second"));
-      add(createMessage(3L, "sender2", 3333, false, "third"));
+      add(createMessage(1L, "sender1", 1111, false, "first", "meta1"));
+      add(createMessage(2L, "sender1", 2222, false, "second", "meta2"));
+      add(createMessage(3L, "sender2", 3333, false, "third", "meta3"));
     }};
 
     OutgoingMessageEntityList outgoingMessagesList = new OutgoingMessageEntityList(outgoingMessages, false);
@@ -240,9 +240,9 @@ public class WebSocketConnectionTest {
     verify(client).close(anyInt(), anyString());
   }
 
-  private OutgoingMessageEntity createMessage(long id, String sender, long timestamp, boolean receipt, String content) {
+  private OutgoingMessageEntity createMessage(long id, String sender, long timestamp, boolean receipt, String content, String meta) {
     return new OutgoingMessageEntity(id, receipt ? Envelope.Type.RECEIPT_VALUE : Envelope.Type.CIPHERTEXT_VALUE,
-                                     null, timestamp, sender, 1, content.getBytes(), null);
+                                     null, timestamp, sender, 1, content.getBytes(), null, meta);
   }
 
 }

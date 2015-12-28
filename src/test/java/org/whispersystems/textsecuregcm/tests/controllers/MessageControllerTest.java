@@ -25,10 +25,7 @@ import org.whispersystems.textsecuregcm.tests.util.AuthHelper;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -176,10 +173,12 @@ public class MessageControllerTest {
 
     final long timestampOne = 313377;
     final long timestampTwo = 313388;
+    final String meta1 = UUID.randomUUID().toString();
+    final String meta2 = UUID.randomUUID().toString();
 
     List<OutgoingMessageEntity> messages = new LinkedList<OutgoingMessageEntity>() {{
-      add(new OutgoingMessageEntity(1L, Envelope.Type.CIPHERTEXT_VALUE, null, timestampOne, "+14152222222", 2, "hi there".getBytes(), null));
-      add(new OutgoingMessageEntity(2L, Envelope.Type.RECEIPT_VALUE, null, timestampTwo, "+14152222222", 2, null, null));
+      add(new OutgoingMessageEntity(1L, Envelope.Type.CIPHERTEXT_VALUE, null, timestampOne, "+14152222222", 2, "hi there".getBytes(), null, meta1));
+      add(new OutgoingMessageEntity(2L, Envelope.Type.RECEIPT_VALUE, null, timestampTwo, "+14152222222", 2, null, null, meta2));
     }};
 
     OutgoingMessageEntityList messagesList = new OutgoingMessageEntityList(messages, false);
@@ -201,6 +200,9 @@ public class MessageControllerTest {
 
     assertEquals(response.getMessages().get(0).getTimestamp(), timestampOne);
     assertEquals(response.getMessages().get(1).getTimestamp(), timestampTwo);
+
+    assertEquals(response.getMessages().get(0).getMeta(), meta1);
+    assertEquals(response.getMessages().get(1).getMeta(), meta2);
   }
 
   @Test
@@ -210,13 +212,13 @@ public class MessageControllerTest {
         .thenReturn(Optional.of(new OutgoingMessageEntity(31337L,
                                                           Envelope.Type.CIPHERTEXT_VALUE,
                                                           null, timestamp,
-                                                          "+14152222222", 1, "hi".getBytes(), null)));
+                                                          "+14152222222", 1, "hi".getBytes(), null, null)));
 
     when(messagesManager.delete(AuthHelper.VALID_NUMBER, "+14152222222", 31338))
         .thenReturn(Optional.of(new OutgoingMessageEntity(31337L,
                                                           Envelope.Type.RECEIPT_VALUE,
                                                           null, System.currentTimeMillis(),
-                                                          "+14152222222", 1, null, null)));
+                                                          "+14152222222", 1, null, null, null)));
 
 
     when(messagesManager.delete(AuthHelper.VALID_NUMBER, "+14152222222", 31339))

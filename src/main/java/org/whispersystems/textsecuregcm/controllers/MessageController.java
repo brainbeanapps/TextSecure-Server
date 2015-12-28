@@ -212,6 +212,10 @@ public class MessageController {
         messageBuilder.setRelay(source.getRelay().get());
       }
 
+      if (incomingMessage.getMeta() != null) {
+        messageBuilder.setMeta(incomingMessage.getMeta());
+      }
+
       pushSender.sendMessage(destinationAccount, destinationDevice, messageBuilder.build());
     } catch (NotPushRegisteredException e) {
       if (destinationDevice.isMaster()) throw new NoSuchUserException(e);

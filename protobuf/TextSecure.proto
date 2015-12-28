@@ -35,6 +35,7 @@ message Envelope {
   optional uint64 timestamp     = 5;
   optional bytes  legacyMessage = 6; // Contains an encrypted DataMessage XXX -- Remove after 10/01/15
   optional bytes  content       = 8; // Contains an encrypted Content
+  optional string meta          = 9;
 }
 
 message ProvisioningUuid {

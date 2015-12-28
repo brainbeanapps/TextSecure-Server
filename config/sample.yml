@@ -4,8 +4,9 @@ twilio: # Twilio SMS gateway configuration
   number:
   localDomain: # The domain Twilio can call back to.
 
-pushymeConfiguration:
+push:
   pushymeApiKey:
+  gcmApiKey:
   #maxPendingTasks: 10000 # maximum number of pushes waiting for sending in queue
   #workerThreadsCount: 20 # number of worker threads which connects to pushy.me to send push
 
