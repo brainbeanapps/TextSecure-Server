@@ -209,7 +209,7 @@ public class AccountController {
   @Path("/gcm/")
   @Consumes(MediaType.APPLICATION_JSON)
   public void setGcmRegistrationId(@Auth Account account, @Valid GcmRegistrationId registrationId) {
-    setPushId(account, registrationId.getGcmRegistrationId(), null, null, null, registrationId.isWebSocketChannel());
+    setPushId(account, null, null, null, registrationId.getGcmRegistrationId(), registrationId.isWebSocketChannel());
   }
 
   @Timed
