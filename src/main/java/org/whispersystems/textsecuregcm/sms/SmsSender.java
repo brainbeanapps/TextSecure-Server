@@ -25,10 +25,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 public class SmsSender {
-
-  static final String SMS_IOS_VERIFICATION_TEXT = "Your Signal verification code: %s\n\nOr tap: sgnl://verify/%s";
-  static final String SMS_VERIFICATION_TEXT     = "Your TextSecure verification code: %s";
-  static final String VOX_VERIFICATION_TEXT     = "Your Signal verification code is: ";
+  static final String SMS_IOS_VERIFICATION_TEXT = "Your Channels verification code: %s\n\nOr tap: sgnl://verify/%s";
+  static final String SMS_VERIFICATION_TEXT     = "Your Channels verification code: %s";
+  static final String VOX_VERIFICATION_TEXT     = "Your Channels verification code is: ";
 
   private final Logger logger = LoggerFactory.getLogger(SmsSender.class);
 
